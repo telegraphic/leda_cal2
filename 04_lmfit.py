@@ -134,10 +134,27 @@ def model_sin_off(x, params):
     mm = A_c * np.sin(PHI * x + PHI0) + B + M * x
     return mm
 
+def flag_data(f, d, bp, thr=5):
+    """ Flag data. Returns compressed arrays
+
+    flags data where abs(data - bandpass) > threshold
+
+    f: frequency
+    d: data (1D)
+    bp: bandpass estimate
+    thr: Threhold from bandpass above which to flag
+    """
+    r = d - bp
+    d = np.ma.array(d)
+    f = np.ma.array(f)
+    d.mask = np.abs(r) > thr
+    f.mask = d.mask
+    return f.compressed(), d.compressed()
+
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description='Plot antenna spectra and residuals')
-    p.add_argument('filename', help='glob of files to open, e.g. data/*2018*.h5')
+    p.add_argument('filename', help='Name of measured data file')
     p.add_argument('-f0', '--f0', help='start frequency in MHz, default 40 MHz', type=float, default=50)
     p.add_argument('-f1', '--f1', help='end frequency in MHz, default 87.6 MHz', type=float,  default=87.6)
     p.add_argument('-n',  '--n_poly', help='number of terms in log-poly to fit for residuals. Default 5', type=int,  default=3)
@@ -152,10 +169,12 @@ if __name__ == "__main__":
     h_254x = hkl.load('cal_data_254A_fit.hkl')
     h_255x = hkl.load('cal_data_255A_fit.hkl')
 
+    # Load and calibrate data
     ff, lsts, C0 = load_data_252x(args.filename, h_252x, f0, lst0=11, lst1=12)
     ff, lsts, D0 = load_data_254x(args.filename, h_254x, f0, lst0=11, lst1=12)
     ff, lsts, E0 = load_data_255x(args.filename, h_255x, f0, lst0=11, lst1=12)
 
+    # Compute 1D spectrum and poly fit
     aC = np.median(C0, axis=0)
     rC = aC - poly_fit(ff, aC, n_poly)
     aD = np.median(D0, axis=0)
@@ -163,15 +182,12 @@ if __name__ == "__main__":
     aE = np.median(E0, axis=0)
     rE = aE - poly_fit(ff, aE, n_poly)
 
+    # Trim down to region of interest
     f2, rC = trim2(rC, ff, 60, 78)
     f2, rD = trim2(rD, ff, 60, 78)
     f2, rE = trim2(rE, ff, 60, 78)
 
-    plt.plot(f2, rC)
-    plt.plot(f2, rD)
-    plt.plot(f2, rE)
-    plt.show()
-
+    # Fit a sine wave
     rC_model_params = fit_model_sin_off(f2, rC)
     rC_sin_model    = model_sin_off(f2, rC_model_params)
     rD_model_params = fit_model_sin_off(f2, rD)
@@ -179,22 +195,15 @@ if __name__ == "__main__":
     rE_model_params = fit_model_sin_off(f2, rE)
     rE_sin_model    = model_sin_off(f2, rE_model_params)
 
-    def flag_data(f, d, bp, thr=5):
-        r = d - bp
-        d = np.ma.array(d)
-        f = np.ma.array(f)
-        d.mask = np.abs(r) > thr
-        f.mask = d.mask
-        return f.compressed(), d.compressed()
-
     fC, rC = flag_data(f2, rC, rC_sin_model, thr=8)
     fD, rD = flag_data(f2, rD, rD_sin_model, thr=8)
     fE, rE = flag_data(f2, rE, rE_sin_model, thr=8)
 
+    plt.figure("FLAGGED")
     plt.plot(fC, rC)
     plt.plot(fD, rD)
     plt.plot(fE, rE)
-    plt.show()
+    plt.savefig("img/04_flagged.png")
 
     rC_model_params = fit_model_sin_off(fC, rC)
     rC_sin_model    = model_sin_off(fC, rC_model_params)
@@ -203,7 +212,6 @@ if __name__ == "__main__":
     rE_model_params = fit_model_sin_off(fE, rE)
     rE_sin_model    = model_sin_off(fE, rE_model_params)
 
-
     # 252A
     plt.figure("252A")
     plt.subplot(2,1,1)
@@ -211,6 +219,7 @@ if __name__ == "__main__":
     plt.plot(fC, rC_sin_model, c='#333333')
     plt.subplot(2,1,2)
     plt.plot(fC, rC - rC_sin_model, c='#cc0000')
+    plt.savefig("img/04_r252A.png")
 
     # 254A
     plt.figure("254A")
@@ -220,6 +229,7 @@ if __name__ == "__main__":
 
     plt.subplot(2,1,2)
     plt.plot(fD, rD - rD_sin_model, c='#cc0000')
+    plt.savefig("img/04_r254A.png")
 
     # 255A
     plt.figure("255A")
@@ -229,6 +239,7 @@ if __name__ == "__main__":
 
     plt.subplot(2,1,2)
     plt.plot(fE, rE - rE_sin_model, c='#cc0000')
+    plt.savefig("img/04_r255A.png")
 
     plt.show()
 
