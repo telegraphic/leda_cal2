@@ -49,7 +49,7 @@ if __name__ == "__main__":
         plt.xlim(f[0], f[-1])
 
     plt.tight_layout()
-    plt.savefig('05_resids.png')
+    plt.savefig('img/05_resids.png')
     plt.show()
 
 
