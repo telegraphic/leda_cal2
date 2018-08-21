@@ -4,6 +4,7 @@ import tables as tb
 from leda_cal2.utils import poly_fit, timestamp_to_lst, closest
 import numpy as np
 import glob
+from scipy.interpolate import interp1d as interp
 
 from lmfit import minimize, Parameters, fit_report
 
@@ -146,10 +147,16 @@ def flag_data(f, d, bp, thr=5):
     """
     r = d - bp
     d = np.ma.array(d)
-    f = np.ma.array(f)
+    fm = np.ma.array(f)
     d.mask = np.abs(r) > thr
-    f.mask = d.mask
-    return f.compressed(), d.compressed()
+    fm.mask = d.mask
+    d.mask[0] = False
+    d.mask[-1] = False
+    fm.mask[0] = False
+    fm.mask[-1] = False
+    ff, dd = fm.compressed(), d.compressed()
+
+    return interp(ff, dd)(f)
 
 if __name__ == "__main__":
     import argparse
@@ -183,9 +190,9 @@ if __name__ == "__main__":
     rE = aE - poly_fit(ff, aE, n_poly)
 
     # Trim down to region of interest
-    f2, rC = trim2(rC, ff, 60, 78)
-    f2, rD = trim2(rD, ff, 60, 78)
-    f2, rE = trim2(rE, ff, 60, 78)
+    f2, rC = trim2(rC, ff, 58, 80)
+    f2, rD = trim2(rD, ff, 58, 80)
+    f2, rE = trim2(rE, ff, 58, 80)
 
     # Fit a sine wave
     rC_model_params = fit_model_sin_off(f2, rC)
@@ -195,51 +202,55 @@ if __name__ == "__main__":
     rE_model_params = fit_model_sin_off(f2, rE)
     rE_sin_model    = model_sin_off(f2, rE_model_params)
 
-    fC, rC = flag_data(f2, rC, rC_sin_model, thr=8)
-    fD, rD = flag_data(f2, rD, rD_sin_model, thr=8)
-    fE, rE = flag_data(f2, rE, rE_sin_model, thr=8)
+    rC = flag_data(f2, rC, rC_sin_model, thr=8)
+    rD = flag_data(f2, rD, rD_sin_model, thr=8)
+    rE = flag_data(f2, rE, rE_sin_model, thr=8)
 
     plt.figure("FLAGGED")
-    plt.plot(fC, rC)
-    plt.plot(fD, rD)
-    plt.plot(fE, rE)
+    plt.plot(f2, rC)
+    plt.plot(f2, rD)
+    plt.plot(f2, rE)
     plt.savefig("img/04_flagged.png")
 
-    rC_model_params = fit_model_sin_off(fC, rC)
-    rC_sin_model    = model_sin_off(fC, rC_model_params)
-    rD_model_params = fit_model_sin_off(fD, rD)
-    rD_sin_model    = model_sin_off(fD, rD_model_params)
-    rE_model_params = fit_model_sin_off(fE, rE)
-    rE_sin_model    = model_sin_off(fE, rE_model_params)
+    rC_model_params = fit_model_sin_off(f2, rC)
+    rC_sin_model    = model_sin_off(f2, rC_model_params)
+    rD_model_params = fit_model_sin_off(f2, rD)
+    rD_sin_model    = model_sin_off(f2, rD_model_params)
+    rE_model_params = fit_model_sin_off(f2, rE)
+    rE_sin_model    = model_sin_off(f2, rE_model_params)
 
     # 252A
     plt.figure("252A")
     plt.subplot(2,1,1)
-    plt.plot(fC, rC, c='#cc0000')
-    plt.plot(fC, rC_sin_model, c='#333333')
+    plt.plot(f2, rC, c='#cc0000')
+    plt.plot(f2, rC_sin_model, c='#333333')
     plt.subplot(2,1,2)
-    plt.plot(fC, rC - rC_sin_model, c='#cc0000')
+    plt.plot(f2, rC - rC_sin_model, c='#cc0000')
     plt.savefig("img/04_r252A.png")
 
     # 254A
     plt.figure("254A")
     plt.subplot(2,1,1)
-    plt.plot(fD, rD, c='#cc0000')
-    plt.plot(fD, rD_sin_model, c='#333333')
+    plt.plot(f2, rD, c='#cc0000')
+    plt.plot(f2, rD_sin_model, c='#333333')
 
     plt.subplot(2,1,2)
-    plt.plot(fD, rD - rD_sin_model, c='#cc0000')
+    plt.plot(f2, rD - rD_sin_model, c='#cc0000')
     plt.savefig("img/04_r254A.png")
 
     # 255A
     plt.figure("255A")
     plt.subplot(2,1,1)
-    plt.plot(fE, rE, c='#cc0000')
-    plt.plot(fE, rE_sin_model, c='#333333')
+    plt.plot(f2, rE, c='#cc0000')
+    plt.plot(f2, rE_sin_model, c='#333333')
 
     plt.subplot(2,1,2)
-    plt.plot(fE, rE - rE_sin_model, c='#cc0000')
+    plt.plot(f2, rE - rE_sin_model, c='#cc0000')
     plt.savefig("img/04_r255A.png")
 
+
+    plt.figure("ALL_AVG")
+    rAll = ((rC - rC_sin_model) + (rD - rD_sin_model) + (rE - rE_sin_model)) / 3
+    plt.plot(f2, rAll)
     plt.show()
 
