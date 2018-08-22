@@ -11,7 +11,8 @@ import pylab as plt
 from scipy.interpolate import interp1d as interp
 import hickle as hkl
 
-from leda_cal2.fileio import read_anritsu_s11, read_cable_sparams, read_s2p_s11, read_spectrum, read_uu_sparams
+from leda_cal2.fileio import read_anritsu_s11, read_cable_sparams, read_s2p_s11, read_spectrum, \
+    read_uu_sparams, read_hirose_adapter_sparams
 from leda_cal2.enr import *
 
 # Constants
@@ -186,6 +187,10 @@ if __name__ == "__main__":
         cable_2m   = read_cable_sparams('cal_data/cable_2m.csv')
         cable_uu   = read_uu_sparams('cal_data/uu_s21.txt')
 
+        # Hirose adapter is used on capacitor measurements
+        cable_hirose_adapter = read_hirose_adapter_sparams('cal_data/hirose_adapter.csv')
+
+
         # Load VNA measurements of HP346 and LNA
         s2p_lna  = read_s2p_s11('cal_data/%s/%s.lna.rl.s2p' % (antenna, antenna))
         s2p_hot  = read_s2p_s11('cal_data/346-7bw3.on.s11.s2p')
@@ -227,13 +232,13 @@ if __name__ == "__main__":
         cable_2m_open    = o.s11(f_mhz) * cable_2m.s21(f_mhz)**2
         cable_2m_short   = s.s11(f_mhz) * cable_2m.s21(f_mhz)**2
         cable_2m_load    = l.s11(f_mhz) * cable_2m.s21(f_mhz)**2
-        cable_2m_c47     = c47.s11(f_mhz) * cable_2m.s21(f_mhz)**2
-        cable_2m_c66     = c66.s11(f_mhz) * cable_2m.s21(f_mhz)**2
+        cable_2m_c47     = c47.s11(f_mhz) * cable_2m.s21(f_mhz)**2 * cable_hirose_adapter.s21(f_mhz)**2
+        cable_2m_c66     = c66.s11(f_mhz) * cable_2m.s21(f_mhz)**2 * cable_hirose_adapter.s21(f_mhz)**2
         cable_0p9m_open  = o.s11(f_mhz) * cable_0p9m.s21(f_mhz)**2
         cable_0p9m_short = s.s11(f_mhz) * cable_0p9m.s21(f_mhz)**2
         cable_0p9m_load  = l.s11(f_mhz) * cable_0p9m.s21(f_mhz)**2
-        cable_0p9m_c47   = c47.s11(f_mhz) * cable_0p9m.s21(f_mhz)**2
-        cable_0p9m_c66   = c66.s11(f_mhz) * cable_0p9m.s21(f_mhz)**2
+        cable_0p9m_c47   = c47.s11(f_mhz) * cable_0p9m.s21(f_mhz)**2 * cable_hirose_adapter.s21(f_mhz)**2
+        cable_0p9m_c66   = c66.s11(f_mhz) * cable_0p9m.s21(f_mhz)**2 * cable_hirose_adapter.s21(f_mhz)**2
 
         # Compute reflection coefficients for these
         GM_lna  = s2p_lna.s11(f_mhz)

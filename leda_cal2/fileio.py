@@ -78,6 +78,15 @@ def read_uu_sparams(filename):
     S = Sparam(f, s21=s21)
     return S
 
+def read_hirose_adapter_sparams(filename):
+    """ Read data from cable CSV files and return instance of Sparam class """
+    d = np.genfromtxt(filename, skip_header=1, skip_footer=0, delimiter=',')
+    f = d[:, 0]
+
+    s21 = interp(f, to_complex(d[:,1:3], linear=False, radians=False))
+    S = Sparam(f, s21=s21)
+    return S
+
 def read_s2p_s11(filename, s11_col=7):
     """ Read data from S2P VNA file and return instance of Sparam class.
 
