@@ -32,7 +32,7 @@ def to_complex(data, linear=True, radians=False):
     y = r * np.sin(q)
     return x + 1j* y
 
-def poly_fit(x, y, n=5, log=True, print_fit=False):
+def poly_fit(x, y, n=5, log=True, print_fit=False, x0=None, x1=None):
     """ Fit a polynomial to x, y data
 
     x (np.array): x-axis of data (e.g. frequency)
@@ -42,9 +42,15 @@ def poly_fit(x, y, n=5, log=True, print_fit=False):
 
     x, y = np.ma.array(x), np.ma.array(y)
 
+    i0, i1 = 0, len(x)
+    if x0 is not None:
+        i0 = closest(x, x0)
+    if x1 is not None:
+        i1 = closest(x, x1)
+
     x_g = x
-    x = np.ma.array(x, mask=y.mask).compressed()
-    y = y.compressed()
+    x = np.ma.array(x, mask=y.mask)[i0:i1].compressed()
+    y = y[i0:i1].compressed()
     if log:
         yl = np.log10(y)
     else:
@@ -111,3 +117,16 @@ def timestamp_to_lst(tstamps):
 
 def closest(x, x0):
     return np.argmin(np.abs(x - x0))
+
+
+def trim(data, f, f0=None, f1=None):
+    i0, i1 = 0, len(data)
+    if f0 is not None:
+        i0 = closest(f, f0)
+    if f1 is not None:
+        i1 = closest(f, f1)
+
+    if data.shape[1] == f.shape[0]:
+        return f[i0:i1], data[:, i0:i1]
+    else:
+        return f[i0:i1], data[i0:i1]

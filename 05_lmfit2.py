@@ -6,6 +6,10 @@ import numpy as np
 import glob
 import hickle
 
+def rebin(x, n):
+    xx = x.reshape(x.shape[0] / n, n).mean(axis=1)
+    return xx
+
 if __name__ == "__main__":
     flist = sorted(glob.glob('cal_out/resid*.h5'))
 
@@ -45,11 +49,14 @@ if __name__ == "__main__":
     for ii in (1,2,3):
         plt.subplot(3,1,ii)
         plt.ylabel("Temperature [K]")
-        plt.ylim(-6, 6)
+        plt.ylim(-10, 10)
         plt.xlim(f[0], f[-1])
 
     plt.tight_layout()
     plt.savefig('img/05_resids.png')
+    plt.show()
+
+    plt.plot(rebin(f[4:], 8), rebin(d254[4:]/N, 8))
     plt.show()
 
 

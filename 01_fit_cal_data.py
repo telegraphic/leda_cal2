@@ -16,22 +16,22 @@ for ant_id in ['252A', '254A', '255A', '254B']:
     T_Cf = poly_fit(f, T_C, 3)
 
     T_NW = a['T_NW']
-    T_NWf = fourier_fit(T_NW, 0, 101)
+    T_NWf = poly_fit(f, T_NW, n=7, x0=35, x1=85, log=False)
 
-    #scale = a['scale']
-    #scalef = poly_fit(f, scale, 11)
-    #
-    #offset = a['offset']
-    #offsetf = poly_fit(f, offset, 7, log=False)
+    scale = a['scale']
+    scalef = poly_fit(f, scale, 11)
+
+    offset = a['offset']
+    offsetf = poly_fit(f, offset, 7, log=False)
 
     G_S = a['G_S']
-    G_Sf = poly_fit(f, G_S, 11, log=False)
+    G_Sf = poly_fit(f, G_S, n=11, x0=40, x1=85, log=False)
 
     b = {'f_mhz': f,
          'T_H': T_Hf,
          'T_C': T_Cf,
-         #'scale': scalef,
-         #'offset': offsetf,
+         'scale': scalef,
+         'offset': offsetf,
          'T_NW': T_NW,
          'G_S': G_Sf}
 
@@ -54,19 +54,19 @@ for ant_id in ['252A', '254A', '255A', '254B']:
     plt.plot(f, T_C - T_Cf)
     plt.savefig("img/fit_fee_nd_cold_%s.png" % ant_id)
 
-    #plt.figure("scale")
-    #plt.subplot(211)
-    #plt.plot(f, scale)
-    #plt.plot(f, scalef)
-    #plt.subplot(212)
-    #plt.plot(f, scale - scalef)
-    #
-    #plt.figure("offset")
-    #plt.subplot(211)
-    #plt.plot(f, offset)
-    #plt.plot(f, offsetf)
-    #plt.subplot(212)
-    #plt.plot(f, offset - offsetf)
+    plt.figure("scale")
+    plt.subplot(211)
+    plt.plot(f, scale)
+    plt.plot(f, scalef)
+    plt.subplot(212)
+    plt.plot(f, scale - scalef)
+
+    plt.figure("offset")
+    plt.subplot(211)
+    plt.plot(f, offset)
+    plt.plot(f, offsetf)
+    plt.subplot(212)
+    plt.plot(f, offset - offsetf)
 
     plt.figure("G_S")
     plt.subplot(211)

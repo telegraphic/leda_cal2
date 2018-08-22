@@ -296,7 +296,7 @@ if __name__ == "__main__":
         T_nw = compute_T_nw(F_min, R_N, B_opt, G_opt, GM_ant)
 
         #######
-        ### TESTING
+        ### Compute scale-offset
         #######
 
         # Compute FE diode state temperatures
@@ -323,24 +323,25 @@ if __name__ == "__main__":
         T_calibrated1 = apply_calibration(P_3ss_hot, T_fe_hot, T_fe_cold,
                           T_rx_cal, T_nw_cal_hot, GM_hot, GM_lna)
 
-        # Difference in Y-factor vs Edward method
-        #plt.plot(T_rx_cal / T_rx_yfm)
-        #plt.show()
+        # COMPARISON OF CALIBRATED VS INPUT HP REFERENCES #
+        # plt.plot(T_calibrated0)
+        # plt.plot(T_hot)
+        # plt.plot(T_cold)
+        # plt.plot(T_calibrated1)
 
-        #plt.figure("3SS test")
-        #plt.subplot(211)
-        #plt.plot(f_mhz, T_cold)
-        #plt.plot(f_mhz, T_calibrated0)
-        #plt.subplot(212)
-        #plt.plot(f_mhz, T_hot)
-        #plt.plot(f_mhz, T_calibrated1)
+        S = (T_calibrated0 - T_calibrated1) / (T_cold - T_hot)
+        O = T_calibrated0 - S * T_cold
 
-        #plt.figure("3SS ratios")
-        #plt.subplot(211)
-        #plt.plot(f_mhz, T_calibrated0 / T_cold)
-        #plt.subplot(212)
-        #plt.plot(f_mhz, T_calibrated1 / T_hot)
+        scale = 1.0 / S
+        offset = -1.0 * O / S
 
+        plt.figure("SCALE_OFFSET")
+        plt.subplot(2,1,1)
+        plt.plot(scale)
+        plt.xlabel("SCALE")
+        plt.subplot(2,1,2)
+        plt.plot(offset)
+        plt.xlabel("OFFSET")
 
         ###########################
         ##    PLOTTING ROUTINES  ##
@@ -402,9 +403,9 @@ if __name__ == "__main__":
             'T_H': T_fe_hot,
             'T_C': T_fe_cold,
             'G_S': G_S,
-            #'scale': scale,
-            #'offset': offset,
-            'T_NW': T_rx_yfm - G_S * T_nw
+            'scale': scale,
+            'offset': offset,
+            'T_NW': T_rx_cal - G_S * T_nw
             }
 
 
